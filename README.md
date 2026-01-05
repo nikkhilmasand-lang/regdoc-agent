@@ -18,8 +18,8 @@ RegDoc Agent helps users query rule-heavy documents (regulations, standards, gui
 ## Architecture (v1)
 User → Orchestrator (router) → Task Agent → Retrieval Layer → Vector Store  
 Task Agent → Guardrails/Formatter → Answer + Sources
+![Architecture Diagram](docs/architecture_v1.png)
 
-> Diagram: `docs/architecture_v1.png`
 
 ## MVP Scope (January)
 **Will do**
