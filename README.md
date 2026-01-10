@@ -1,19 +1,19 @@
 # RegDoc Agent
 
-Agentic, citation-first question answering over regulated documents using retrieval and constrained generation.
+RegDoc Agent is a citation-first system for querying regulated or rule-heavy documents using semantic retrieval and tightly constrained generation.
 
-This project focuses on **correctness, traceability, and controlled behavior** when interacting with rule-heavy documents such as regulations, standards, and compliance guidance.
+The project is built around a simple idea: in regulated environments, **correctness, traceability, and refusal** matter more than fluent answers.
 
 ---
 
 ## What this is
 
-RegDoc Agent is a prototype system that allows users to query regulated documents and receive:
+RegDoc Agent is a public prototype that allows users to query regulatory-style documents and receive:
 
-- Answers grounded strictly in retrieved source text
-- Explicit citations for every key claim
-- Structured outputs (definitions, obligations, timelines, comparisons)
-- Clear refusal when answers cannot be supported by sources
+- Answers grounded strictly in retrieved source text  
+- Explicit source references for every response  
+- Structured outputs such as definitions, obligations, timelines, or comparisons  
+- Clear refusal when a question cannot be supported by available evidence  
 
 The system is intentionally designed to favor **precision over coverage**.
 
@@ -21,57 +21,59 @@ The system is intentionally designed to favor **precision over coverage**.
 
 ## What this is not
 
-- Not legal or compliance advice
-- Not connected to proprietary or internal company documents
-- Not a decision-making or approval system
-- Not a general-purpose chatbot
-- Not trained on user queries
+- Not legal or compliance advice  
+- Not connected to proprietary or internal company documents  
+- Not a decision-making or approval system  
+- Not a general-purpose chatbot  
+- Not trained on user queries or private data  
+
+All documents used are public or sanitized.
 
 ---
 
 ## Architecture (v1)
 
-The system uses an agent-orchestrated retrieval flow.
+The system follows an agent-orchestrated retrieval flow.
 
 ![Architecture Diagram](docs/architecture_v1.png)
 
-**High-level flow:**
+### High-level flow
 
-1. User submits a natural-language query
-2. Orchestrator classifies the request type
-3. A specialized agent handles the task
-4. Relevant document sections are retrieved via semantic search
-5. The agent produces an answer **only from retrieved evidence**
-6. Output is returned with citations
+1. A user submits a natural-language query  
+2. An orchestrator classifies the query type  
+3. A task-specific agent is selected  
+4. Relevant document sections are retrieved via semantic search  
+5. Responses are produced strictly from retrieved evidence  
+6. Output is returned with clear source references  
 
 ---
 
 ## Core components
 
-- **Orchestrator Agent**  
-  Routes queries to the appropriate task agent based on intent
+- **Orchestrator**  
+  Routes queries based on intent (lookup, extract, compare)
 
-- **Task Agents**
-  - Lookup Agent (definitions / requirements)
-  - Compare Agent (document or section comparison)
-  - Extract Agent (obligations, timelines, exceptions)
+- **Task agents**  
+  - Lookup agent (definitions, requirements)  
+  - Compare agent (sections or documents)  
+  - Extract agent (obligations, timelines, exceptions)
 
-- **Retrieval Layer**  
-  Semantic search over embedded document chunks with metadata filtering
+- **Retrieval layer**  
+  Semantic search over embedded document chunks with metadata
 
-- **Document Store & Ingestion**  
-  Public or sanitized regulatory documents indexed with metadata
+- **Document ingestion**  
+  Public or sanitized regulatory documents, chunked and indexed with traceability
 
-- **Guardrails & Formatter**  
+- **Guardrails & formatting**  
   Enforces citation requirements and prevents unsupported responses
 
 ---
 
-## Scope & boundaries
+## Scope and boundaries
 
-The project deliberately limits scope to ensure safe, defensible behavior.
+This project deliberately limits scope to remain defensible and explainable.
 
-- [Regulated Documents — Scope Definition](Notes/regulated_documents_scope.md)
+- [Regulated Documents — Scope Definition](Notes/regulated_documents_scope.md)  
 - [MVP Scope — Will Do / Will Not Do](Notes/mvp_scope.md)
 
 ---
@@ -79,41 +81,70 @@ The project deliberately limits scope to ensure safe, defensible behavior.
 ## MVP scope (January)
 
 **Included**
-- Document ingestion
-- Vector-based retrieval
-- Source-cited answers
-- Simple agent routing
+- Document ingestion and chunking  
+- Vector-based semantic retrieval  
+- Source-traceable results  
+- Minimal routing logic  
 
-**Excluded (for v1)**
-- Fancy UI
-- Role-based access control
-- Production-grade security
-- Legal or compliance recommendations
-
----
-
-## Repo status
-
-This repository represents an **early-stage but evolving system**.
-
-Planned progression:
-- **v1:** Skeleton, retrieval, citations
-- **v2:** Evaluation, failure modes, refusals
-- **v3:** Polish, documentation, reuse
+**Excluded (v1)**
+- UI or frontend work  
+- Role-based access control  
+- Production-grade security  
+- Legal or compliance recommendations  
 
 ---
 
-## Roadmap
+## Current status
 
-- [x] Scope definition
-- [x] Architecture v1
-- [ ] Ingestion pipeline
-- [ ] Retrieval + citations
-- [ ] Agent routing
-- [ ] Evaluation harness
+This repository represents an early but working system.
+
+At this stage:
+- Ingestion, semantic retrieval, and source traceability are implemented  
+- The system can retrieve and rank relevant document passages for a query  
+- Agent routing and evaluation will be layered next  
 
 ---
 
-## License
+## Quickstart (local demo)
+
+### 1. Ingest documents
+python scripts/ingest.py
+### 2. Build semantic index
+python scripts/build_index.py
+
+### 3. Query the system
+python scripts/query.py
+
+
+### Example query:
+
+What is data privacy?
+
+
+The system retrieves the most relevant document passages with clear source references.
+
+Example queries
+
+What is data privacy?
+
+Why is reporting important in organizations?
+
+What does risk management involve?
+
+### Roadmap
+
+ Scope definition
+
+ Architecture v1
+
+ Ingestion pipeline
+
+ Semantic retrieval with traceability
+
+ Agent routing
+
+ Evaluation and failure analysis
+
+### License
 
 MIT (public prototype)
