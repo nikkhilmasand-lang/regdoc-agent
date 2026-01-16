@@ -13,6 +13,16 @@ from regdoc_agent.agents.lookup import LookupAgent
 
 
 def main():
+    """
+    CLI entrypoint for querying the RegDoc Agent.
+
+    Flow:
+    - Load environment variables
+    - Initialize OpenAI client
+    - Run LookupAgent
+    - Print OK or REFUSAL with evidence
+    """
+
     load_dotenv()
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -20,21 +30,50 @@ def main():
         raise RuntimeError("OPENAI_API_KEY not found in environment")
 
     client = OpenAI(api_key=api_key)
-    agent = LookupAgent(client)
+
+    # Thresholds are intentionally conservative for regulated behavior
+    agent = LookupAgent(
+        client=client,
+        top_k=5,
+        min_top_score=0.55,
+        min_margin=0.20,
+    )
 
     query = input("Ask a question: ").strip()
     if not query:
         print("No query provided.")
         return
 
-    results = agent.run(query)
+    out = agent.run(query)
 
-    if not results:
-        print("\nNo relevant passages found.\n")
-        return
+    if not out["ok"]:
+        print("\nREFUSAL")
+        print(f"- reason: {out['reason']}")
 
-    print("\nTop retrieved passages:\n")
-    for i, r in enumerate(results, start=1):
+        if out.get("top_score") is not None:
+            print(f"- top_score: {out['top_score']:.3f}")
+        else:
+            print("- top_score: N/A")
+
+        if out.get("margin") is not None:
+            print(f"- margin: {out['margin']:.3f}")
+
+        if not out["results"]:
+            print("\nNo passages retrieved.\n")
+            return
+
+        print("\nClosest retrieved passages (for transparency):\n")
+
+    else:
+        print("\nOK")
+        print(f"- top_score: {out['top_score']:.3f}")
+
+        if out.get("margin") is not None:
+            print(f"- margin: {out['margin']:.3f}")
+
+        print("\nTop retrieved passages:\n")
+
+    for i, r in enumerate(out["results"], start=1):
         print(f"{i}. score={r['score']:.3f}")
         print(f"   doc: {r['doc_id']} | chunk: {r['chunk_id']}")
         print(f"   source: {r['source_file']}")
