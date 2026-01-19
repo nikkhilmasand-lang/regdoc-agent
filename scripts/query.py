@@ -9,8 +9,7 @@ sys.path.append(str(ROOT / "src"))
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from regdoc_agent.agents.lookup import LookupAgent
-
+from regdoc_agent.orchestrator.router import Orchestrator
 
 def main():
     """
@@ -32,19 +31,14 @@ def main():
     client = OpenAI(api_key=api_key)
 
     # Thresholds are intentionally conservative for regulated behavior
-    agent = LookupAgent(
-        client=client,
-        top_k=5,
-        min_top_score=0.55,
-        min_margin=0.20,
-    )
+    orchestrator = Orchestrator(client)
 
     query = input("Ask a question: ").strip()
     if not query:
         print("No query provided.")
         return
 
-    out = agent.run(query)
+    out = orchestrator.run(query)
 
     if not out["ok"]:
         print("\nREFUSAL")
