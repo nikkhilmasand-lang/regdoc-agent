@@ -16,5 +16,11 @@
     "chunk_id": 0,
     "source_file": "data/raw/doc3_risk.txt",
     "text_preview": "Title: Risk Identification and Mitigation Overview  Risk management involves identifying potential events or conditions that could negatively impact systems, users, or organizational objectives. These risks may be technical, operational, legal, or reputational in nature. Early id"
+  },
+  {
+    "doc_id": "doc4_obligations",
+    "chunk_id": 0,
+    "source_file": "data/raw/doc4_obligations.txt",
+    "text_preview": "Title: Example Policy Obligations (Sanitized)  1. Access Control - Systems must enforce role-based access to sensitive data. - Administrative access shall be limited to authorized personnel only. - Users should be granted the minimum level of access required to perform their duti"
   }
 ]

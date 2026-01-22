@@ -1,0 +1,21 @@
+Title: Example Policy Obligations (Sanitized)
+
+1. Access Control
+- Systems must enforce role-based access to sensitive data.
+- Administrative access shall be limited to authorized personnel only.
+- Users should be granted the minimum level of access required to perform their duties.
+
+2. Encryption
+- Sensitive data must be encrypted at rest and in transit.
+- Encryption keys shall be rotated on a defined schedule.
+- Weak or deprecated cryptographic algorithms are prohibited.
+
+3. Logging and Monitoring
+- Systems must generate audit logs for access to sensitive resources.
+- Audit logs shall be retained for at least 12 months.
+- Monitoring alerts should be configured for unusual access patterns.
+
+4. Incident Response
+- Security incidents must be reported within 24 hours of detection.
+- A documented incident response process shall be maintained and reviewed periodically.
+- Post-incident reviews should identify corrective actions and owners.

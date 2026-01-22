@@ -11,6 +11,7 @@ from openai import OpenAI
 
 from regdoc_agent.orchestrator.router import Orchestrator
 
+
 def main():
     """
     CLI entrypoint for querying the RegDoc Agent.
@@ -18,8 +19,8 @@ def main():
     Flow:
     - Load environment variables
     - Initialize OpenAI client
-    - Run LookupAgent
-    - Print OK or REFUSAL with evidence
+    - Run Orchestrator (intent routing)
+    - Print OK or REFUSAL with evidence (and extract snippets when available)
     """
 
     load_dotenv()
@@ -29,8 +30,6 @@ def main():
         raise RuntimeError("OPENAI_API_KEY not found in environment")
 
     client = OpenAI(api_key=api_key)
-
-    # Thresholds are intentionally conservative for regulated behavior
     orchestrator = Orchestrator(client)
 
     query = input("Ask a question: ").strip()
@@ -40,9 +39,12 @@ def main():
 
     out = orchestrator.run(query)
 
-    if not out["ok"]:
+    intent = out.get("intent", "unknown")
+    print(f"\nIntent: {intent}")
+
+    if not out.get("ok", False):
         print("\nREFUSAL")
-        print(f"- reason: {out['reason']}")
+        print(f"- reason: {out.get('reason', 'Insufficient evidence.')}")
 
         if out.get("top_score") is not None:
             print(f"- top_score: {out['top_score']:.3f}")
@@ -52,22 +54,49 @@ def main():
         if out.get("margin") is not None:
             print(f"- margin: {out['margin']:.3f}")
 
-        if not out["results"]:
-            print("\nNo passages retrieved.\n")
+        # For extract intent, still show if any obligation-like snippets were detected
+        if intent == "extract":
+            exts = out.get("extractions", [])
+            if exts:
+                print("\nExtracted obligation-like statements (partial, rule-based):\n")
+                for i, e in enumerate(exts, start=1):
+                    print(f"{i}. doc: {e['doc_id']} | chunk: {e['chunk_id']} | source: {e['source_file']}")
+                    print(f"   snippet: {e['snippet']}")
+                    print()
+            else:
+                print("\nNo obligation-like statements detected in retrieved evidence.\n")
+
+        # If no retrieved passages, stop
+        if not out.get("results"):
+            print("No passages retrieved.")
             return
 
-        print("\nClosest retrieved passages (for transparency):\n")
+        print("Closest retrieved passages (for transparency):\n")
 
     else:
         print("\nOK")
-        print(f"- top_score: {out['top_score']:.3f}")
+
+        if out.get("top_score") is not None:
+            print(f"- top_score: {out['top_score']:.3f}")
 
         if out.get("margin") is not None:
             print(f"- margin: {out['margin']:.3f}")
 
+        # For extract intent, print extracted obligation-like snippets first
+        if intent == "extract":
+            exts = out.get("extractions", [])
+            if exts:
+                print("\nExtracted obligation-like statements (partial, rule-based):\n")
+                for i, e in enumerate(exts, start=1):
+                    print(f"{i}. doc: {e['doc_id']} | chunk: {e['chunk_id']} | source: {e['source_file']}")
+                    print(f"   snippet: {e['snippet']}")
+                    print()
+            else:
+                print("\nNo obligation-like statements detected in retrieved evidence.\n")
+
         print("\nTop retrieved passages:\n")
 
-    for i, r in enumerate(out["results"], start=1):
+    for i, r in enumerate(out.get("results", []), start=1):
         print(f"{i}. score={r['score']:.3f}")
         print(f"   doc: {r['doc_id']} | chunk: {r['chunk_id']}")
         print(f"   source: {r['source_file']}")
