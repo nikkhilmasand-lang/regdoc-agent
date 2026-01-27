@@ -9,8 +9,8 @@ OUT_PATH = Path("data/processed/chunks.jsonl")
 
 # Simple chunking parameters (good enough for v1)
 MODEL_ENCODING = "cl100k_base"
-CHUNK_TOKENS = 600
-OVERLAP_TOKENS = 80
+CHUNK_TOKENS = 220
+OVERLAP_TOKENS = 40
 
 def chunk_text(text: str, doc_id: str):
     enc = tiktoken.get_encoding(MODEL_ENCODING)

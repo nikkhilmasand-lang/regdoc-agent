@@ -20,6 +20,7 @@ def retrieve_chunks(client: OpenAI, query: str, top_k: int = 5) -> List[Dict]:
       - chunk_id
       - source_file
       - text_preview
+      - text (full chunk text)
       - score
     """
     if not INDEX_PATH.exists() or not META_PATH.exists():
@@ -46,7 +47,8 @@ def retrieve_chunks(client: OpenAI, query: str, top_k: int = 5) -> List[Dict]:
             "doc_id": m["doc_id"],
             "chunk_id": m["chunk_id"],
             "source_file": m["source_file"],
-            "text_preview": m["text_preview"],
+            "text_preview": m.get("text_preview", ""),
+            "text": m.get("text", ""),  # ✅ NEW: full chunk text
             "score": float(score),
         })
 

@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any
+from typing import Dict, Any, List
 from openai import OpenAI
 
 from regdoc_agent.retrieval.semantic import retrieve_chunks
@@ -9,6 +9,21 @@ OBLIGATION_PATTERN = re.compile(
     r"\b(must|shall|should|required|requirement|mandatory|ensure|comply|prohibited|not allowed)\b",
     re.IGNORECASE,
 )
+
+CATEGORY_KEYWORDS = {
+    "Access Control": ["access", "role", "authorize", "privilege", "least privilege"],
+    "Encryption": ["encrypt", "encryption", "keys", "cryptographic", "cipher", "rotate"],
+    "Logging & Monitoring": ["log", "audit", "monitor", "alert", "retained", "retain"],
+    "Incident Response": ["incident", "report", "detection", "response", "review"],
+}
+
+
+def guess_category(text: str) -> str:
+    t = text.lower()
+    for cat, kws in CATEGORY_KEYWORDS.items():
+        if any(k in t for k in kws):
+            return cat
+    return "General"
 
 
 class ExtractAgent:
@@ -33,6 +48,25 @@ class ExtractAgent:
         self.min_top_score = min_top_score
         self.min_margin = min_margin
 
+    def _split_statements(self, text: str) -> List[str]:
+        """
+        Deterministic splitting into 'statements' for rule-based extraction.
+        Keeps it simple and robust for v1.
+        """
+        # Normalize whitespace
+        t = text.replace("\n", " ").strip()
+
+        # Split on sentence boundaries OR bullet separators
+        parts = re.split(r"(?<=[.!?])\s+| - ", t)
+
+        # Clean
+        cleaned = []
+        for p in parts:
+            p = p.strip(" -\t")
+            if p:
+                cleaned.append(p)
+        return cleaned
+
     def run(self, query: str) -> Dict[str, Any]:
         results = retrieve_chunks(client=self.client, query=query, top_k=self.top_k)
 
@@ -54,18 +88,24 @@ class ExtractAgent:
         ok_by_margin = (margin is None) or (margin >= self.min_margin)
         evidence_ok = ok_by_score and ok_by_margin
 
-        # Lightweight extraction: find sentences with obligation language
+        # Rule-based extraction using FULL chunk text
         extractions = []
         for r in results:
-            text = r.get("text_preview", "")
-            if OBLIGATION_PATTERN.search(text):
-                extractions.append({
-                    "doc_id": r["doc_id"],
-                    "chunk_id": r["chunk_id"],
-                    "source_file": r["source_file"],
-                    "snippet": text,
-                })
+            full_text = (r.get("text") or "").strip()
+            if not full_text:
+                continue
 
+            for stmt in self._split_statements(full_text):
+                if OBLIGATION_PATTERN.search(stmt):
+                    extractions.append({
+                        "category": guess_category(stmt),
+                        "obligation": stmt,
+                        "doc_id": r["doc_id"],
+                        "chunk_id": r["chunk_id"],
+                        "source_file": r["source_file"],
+                    })
+
+        # If evidence match is weak, refuse (but still return what we found for transparency)
         if not evidence_ok:
             return {
                 "ok": False,
@@ -76,7 +116,7 @@ class ExtractAgent:
                 "results": results,
             }
 
-        # Even if semantic evidence is okay, refuse if we found no obligation statements
+        # Evidence match is OK, but no obligations detected
         if not extractions:
             return {
                 "ok": False,

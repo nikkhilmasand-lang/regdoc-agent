@@ -12,17 +12,17 @@ from openai import OpenAI
 from regdoc_agent.orchestrator.router import Orchestrator
 
 
+def _print_obligations(exts):
+    print("\nExtracted obligations (rule-based):\n")
+    for i, e in enumerate(exts, start=1):
+        category = e.get("category", "General")
+        obligation = e.get("obligation", "").strip()
+        print(f"{i}. [{category}] {obligation}")
+        print(f"   source: {e.get('doc_id')} | chunk: {e.get('chunk_id')} | {e.get('source_file')}")
+        print()
+
+
 def main():
-    """
-    CLI entrypoint for querying the RegDoc Agent.
-
-    Flow:
-    - Load environment variables
-    - Initialize OpenAI client
-    - Run Orchestrator (intent routing)
-    - Print OK or REFUSAL with evidence (and extract snippets when available)
-    """
-
     load_dotenv()
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -54,19 +54,14 @@ def main():
         if out.get("margin") is not None:
             print(f"- margin: {out['margin']:.3f}")
 
-        # For extract intent, still show if any obligation-like snippets were detected
+        # Show extractions if present (even on refusal, for transparency)
         if intent == "extract":
             exts = out.get("extractions", [])
             if exts:
-                print("\nExtracted obligation-like statements (partial, rule-based):\n")
-                for i, e in enumerate(exts, start=1):
-                    print(f"{i}. doc: {e['doc_id']} | chunk: {e['chunk_id']} | source: {e['source_file']}")
-                    print(f"   snippet: {e['snippet']}")
-                    print()
+                _print_obligations(exts)
             else:
                 print("\nNo obligation-like statements detected in retrieved evidence.\n")
 
-        # If no retrieved passages, stop
         if not out.get("results"):
             print("No passages retrieved.")
             return
@@ -82,15 +77,10 @@ def main():
         if out.get("margin") is not None:
             print(f"- margin: {out['margin']:.3f}")
 
-        # For extract intent, print extracted obligation-like snippets first
         if intent == "extract":
             exts = out.get("extractions", [])
             if exts:
-                print("\nExtracted obligation-like statements (partial, rule-based):\n")
-                for i, e in enumerate(exts, start=1):
-                    print(f"{i}. doc: {e['doc_id']} | chunk: {e['chunk_id']} | source: {e['source_file']}")
-                    print(f"   snippet: {e['snippet']}")
-                    print()
+                _print_obligations(exts)
             else:
                 print("\nNo obligation-like statements detected in retrieved evidence.\n")
 
@@ -100,7 +90,7 @@ def main():
         print(f"{i}. score={r['score']:.3f}")
         print(f"   doc: {r['doc_id']} | chunk: {r['chunk_id']}")
         print(f"   source: {r['source_file']}")
-        print(f"   preview: {r['text_preview']}")
+        print(f"   preview: {r.get('text_preview', '')}")
         print()
 
 
