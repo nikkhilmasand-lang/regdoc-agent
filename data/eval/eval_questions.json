@@ -1,0 +1,17 @@
+[
+  {
+    "question": "What is data privacy?",
+    "expected_doc": "doc1_privacy",
+    "type": "lookup"
+  },
+  {
+    "question": "List all obligations mentioned in the documents",
+    "expected_doc": "doc4_obligations",
+    "type": "extract"
+  },
+  {
+    "question": "What is GDPR Article 6?",
+    "expected_doc": null,
+    "type": "lookup"
+  }
+]
