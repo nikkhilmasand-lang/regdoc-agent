@@ -1,8 +1,8 @@
 # RegDoc Agent
 
-RegDoc Agent is a citation-first system for querying regulated or rule-heavy documents using semantic retrieval and tightly constrained generation.
+RegDoc Agent is a citation-first system for querying regulated or rule-heavy documents using semantic retrieval and tightly constrained reasoning.
 
-The project is built around a simple idea: in regulated environments, **correctness, traceability, and refusal** matter more than fluent answers.
+The project is built around a simple idea: in regulated environments, **correctness, traceability, and knowing when to refuse** matter more than fluent or complete answers.
 
 ---
 
@@ -12,7 +12,7 @@ RegDoc Agent is a public prototype that allows users to query regulatory-style d
 
 - Answers grounded strictly in retrieved source text  
 - Explicit source references for every response  
-- Structured outputs such as definitions, obligations, timelines, or comparisons  
+- Structured outputs such as definitions or extracted obligations  
 - Clear refusal when a question cannot be supported by available evidence  
 
 The system is intentionally designed to favor **precision over coverage**.
@@ -27,7 +27,7 @@ The system is intentionally designed to favor **precision over coverage**.
 - Not a general-purpose chatbot  
 - Not trained on user queries or private data  
 
-All documents used are public or sanitized.
+All documents used are public or sanitized examples.
 
 ---
 
@@ -40,32 +40,37 @@ The system follows an agent-orchestrated retrieval flow.
 ### High-level flow
 
 1. A user submits a natural-language query  
-2. An orchestrator classifies the query type  
-3. A task-specific agent is selected  
-4. Relevant document sections are retrieved via semantic search  
-5. Responses are produced strictly from retrieved evidence  
-6. Output is returned with clear source references  
+2. An orchestrator classifies the query intent  
+3. A task-specific agent is selected (lookup or extract)  
+4. Relevant document chunks are retrieved via semantic search  
+5. Evidence quality is evaluated using score and margin thresholds  
+6. The system either:
+   - returns a sourced answer, or  
+   - explicitly refuses if evidence is insufficient  
+
+Refusal is treated as a **correct and intentional outcome**.
 
 ---
 
 ## Core components
 
 - **Orchestrator**  
-  Routes queries based on intent (lookup, extract, compare)
+  Routes queries based on intent (lookup vs. extract)
 
-- **Task agents**  
-  - Lookup agent (definitions, requirements)  
-  - Compare agent (sections or documents)  
-  - Extract agent (obligations, timelines, exceptions)
+- **Lookup Agent**  
+  Handles definition and explanation-style queries
 
-- **Retrieval layer**  
-  Semantic search over embedded document chunks with metadata
+- **Extract Agent**  
+  Performs rule-based extraction of obligation-like statements using explicit language patterns (e.g., *must*, *shall*, *required*)
 
-- **Document ingestion**  
-  Public or sanitized regulatory documents, chunked and indexed with traceability
+- **Retrieval Layer**  
+  FAISS-based semantic search over embedded document chunks with traceable metadata
 
-- **Guardrails & formatting**  
-  Enforces citation requirements and prevents unsupported responses
+- **Guardrails & Refusal Logic**  
+  Enforces evidence thresholds and prevents unsupported or misleading responses
+
+- **Evaluation Harness**  
+  Measures retrieval precision and validates expected refusals
 
 ---
 
@@ -74,7 +79,8 @@ The system follows an agent-orchestrated retrieval flow.
 This project deliberately limits scope to remain defensible and explainable.
 
 - [Regulated Documents — Scope Definition](Notes/regulated_documents_scope.md)  
-- [MVP Scope — Will Do / Will Not Do](Notes/mvp_scope.md)
+- [MVP Scope — Will Do / Will Not Do](Notes/mvp_scope.md)  
+- [Design Decisions](docs/design_decisions.md)
 
 ---
 
@@ -84,67 +90,51 @@ This project deliberately limits scope to remain defensible and explainable.
 - Document ingestion and chunking  
 - Vector-based semantic retrieval  
 - Source-traceable results  
-- Minimal routing logic  
+- Intent routing (lookup / extract)  
+- Refusal-first behavior with explicit reasons  
+- Retrieval evaluation and failure analysis  
 
 **Excluded (v1)**
 - UI or frontend work  
 - Role-based access control  
 - Production-grade security  
 - Legal or compliance recommendations  
+- Model fine-tuning  
 
 ---
 
 ## Current status
 
-This repository represents an early but working system.
+This repository represents an early but complete **v0.1 system**.
 
 At this stage:
-- Ingestion, semantic retrieval, and source traceability are implemented  
-- The system can retrieve and rank relevant document passages for a query  
-- Agent routing and evaluation will be layered next  
+- Ingestion, semantic retrieval, and traceability are implemented  
+- The system can extract obligation-style statements when evidence exists  
+- Unsupported or out-of-scope queries are explicitly refused  
+- Retrieval behavior is evaluated using a small test set  
+
+The system prioritizes **safe behavior over answer completeness**.
 
 ---
 
 ## Quickstart (local demo)
 
 ### 1. Ingest documents
+```bash
 python scripts/ingest.py
-### 2. Build semantic index
+2. Build semantic index
 python scripts/build_index.py
 
-### 3. Query the system
+3. Run queries
 python scripts/query.py
 
-
-### Example query:
-
-What is data privacy?
-
-
-The system retrieves the most relevant document passages with clear source references.
-
 Example queries
-
 What is data privacy?
 
-Why is reporting important in organizations?
+List all obligations mentioned in the documents
 
-What does risk management involve?
+What is GDPR Article 6?
 
-### Roadmap
-
- Scope definition
-
- Architecture v1
-
- Ingestion pipeline
-
- Semantic retrieval with traceability
-
- Agent routing
-
- Evaluation and failure analysis
-
-### License
+###License
 
 MIT (public prototype)
